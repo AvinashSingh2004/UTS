@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTS Lite - On-Station Ticketing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #1e1e2e, #2d2d44);
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --text-color: #ffffff;
+            --accent-color: #00ffbb;
+            --hover-color: #00e5a7;
+            --error-color: #ff4757;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, var(--accent-color), #a8ff78);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .input-group {
+            position: relative;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        /* Custom select styles */
+        .custom-select {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .select-trigger {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .select-trigger::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;  /* Slightly smaller icon for mobile */
+            height: 18px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300ffbb'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        #stationSearch {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            height: 50px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: var(--text-color);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .options-container {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #2d2d44;
+            border-radius: 12px;
+            margin-top: 5px;
+            max-height: 0;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            opacity: 0;
+        }
+
+        .options-container.active {
+            max-height: 200px;
+            opacity: 1;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .option {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        button {
+            width: 100%;
+            max-width: 100%;
+            padding: 15px;
+            height: 50px;
+            margin-top: 15px;
+            border: none;
+            border-radius: 12px;
+            background: var(--accent-color);
+            color: #1e1e2e;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background: var(--hover-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 187, 0.2);
+        }
+
+        #linkResult {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            word-break: break-all;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        #linkResult.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        a:hover {
+            color: var(--hover-color);
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 90%;
+                max-width: 600px;
+                margin: 20px auto;
+                padding: 24px;
+                border-radius: 16px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+                margin-bottom: 24px;
+            }
+
+            .input-group {
+                width: 100%;
+                margin: 20px 0;
+            }
+
+            .custom-select {
+                width: 100%;
+            }
+
+            #stationSearch {
+                width: 100%;
+                height: 52px;
+                padding: 0 45px;
+                font-size: 16px;
+                border-radius: 10px;
+            }
+
+            .select-trigger {
+                width: 100%;
+                margin: 0;
+            }
+
+            .select-trigger::before {
+                left: 15px;
+                width: 18px;
+                height: 18px;
+            }
+
+            .options-container {
+                max-height: 45vh;
+                border-radius: 10px;
+            }
+
+            .option {
+                padding: 14px 16px;
+                font-size: 15px;
+            }
+
+            button {
+                width: 100%;
+                height: 52px;
+                margin: 20px 0;
+                padding: 0;
+                font-size: 16px;
+                border-radius: 10px;
+            }
+
+            #linkResult {
+                width: 100%;
+                margin: 20px 0;
+                padding: 16px;
+                font-size: 15px;
+                border-radius: 10px;
+            }
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 480px) {
+            .container {
+                width: 100%;
+                padding: 16px;
+                margin: 0;
+                border-radius: 12px;
+            }
+
+            .input-group {
+                width: 100%;
+                padding: 0;
+                margin: 16px 0;
+            }
+
+            .custom-select {
+                width: 100%;
+            }
+
+            #stationSearch {
+                width: 100%;
+                height: 48px;
+                padding: 0 40px;
+                font-size: 16px;
+                border-radius: 8px;
+            }
+
+            .select-trigger {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            button {
+                width: 100%;
+                height: 48px;
+                margin: 16px 0;
+                padding: 0;
+                font-size: 16px;
+                border-radius: 8px;
+            }
+
+            #linkResult {
+                width: 100%;
+                margin: 16px 0;
+                padding: 12px;
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.05);
+                opacity: 1;
+                display: block;
+                word-break: break-all;
+                color: var(--text-color);
+            }
+
+            #linkResult.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+            #linkResult a {
+                color: var(--accent-color);
+                word-wrap: break-word;
+                display: inline-block;
+                width: 100%;
+            }
+        }
+
+        /* Add this to ensure visibility across all devices */
+        .active#linkResult {
+            display: block !important;
+            opacity: 1 !important;
+        }
+
+        /* iOS-specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            #stationSearch,
+            button {
+                font-size: 16px !important;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .options-container {
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        /* Prevent zoom on iOS */
+        @media screen and (max-width: 480px) and (-webkit-min-device-pixel-ratio: 0) { 
+            .custom-select #stationSearch {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>On-Station Ticketing</h1>
+        
+        <!-- Replace the existing select with this custom select dropdown -->
+        <div class="input-group">
+            <div class="custom-select">
+                <div class="select-trigger">
+                    <input type="text" id="stationSearch" placeholder="Search station...">
+                </div>
+                <div class="options-container">
+                    <div class="option" data-value="CSTM">CSTM - Chhatrapati Shivaji Terminus</div>
+                    <div class="option" data-value="DADAR">DDR - Dadar</div>
+                    <div class="option" data-value="KURLA">KLA - Kurla</div>
+                    <div class="option" data-value="BANDRA">BND - Bandra</div>
+                    <div class="option" data-value="THANE">TNA - Thane</div>
+                    <div class="option" data-value="KALYAN">KYN - Kalyan</div>
+                </div>
+                <input type="hidden" id="stationSelect" value="">
+            </div>
+        </div>
+        
+        <button onclick="generateLink()">Generate Link</button>
+        
+        <div id="linkResult"></div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('stationSearch');
+        const optionsContainer = document.querySelector('.options-container');
+        const options = document.querySelectorAll('.option');
+        const hiddenSelect = document.getElementById('stationSelect');
+
+        searchInput.addEventListener('focus', () => {
+            optionsContainer.classList.add('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.custom-select')) {
+                optionsContainer.classList.remove('active');
+            }
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            const searchText = e.target.value.toLowerCase();
+            options.forEach(option => {
+                const text = option.textContent.toLowerCase();
+                option.style.display = text.includes(searchText) ? 'block' : 'none';
+            });
+        });
+
+        options.forEach(option => {
+            option.addEventListener('click', () => {
+                searchInput.value = option.textContent;
+                hiddenSelect.value = option.dataset.value;
+                optionsContainer.classList.remove('active');
+            });
+        });
+
+        function generateLink() {
+            const station = hiddenSelect.value;
+            const linkResult = document.getElementById('linkResult');
+            
+            if (!station) {
+                linkResult.innerHTML = `<span style="color: var(--error-color)">Please select a station first</span>`;
+                linkResult.classList.add('active');
+                return;
+            }
+            
+            const link = `https://uts.indianrail.gov.in/ticket?station=${station}`;
+            linkResult.innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
+            linkResult.classList.add('active');
+            
+            // Force visibility on mobile
+            linkResult.style.display = 'block';
+            linkResult.style.opacity = '1';
+        }
+    </script>
+</body>
+</html>
